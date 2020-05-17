@@ -1,2 +1,2 @@
-# web_researchers
+# 블록체인 기반 프리랜서 플랫폼
  
