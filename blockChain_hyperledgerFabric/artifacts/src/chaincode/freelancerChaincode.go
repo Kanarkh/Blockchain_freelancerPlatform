@@ -33,7 +33,7 @@ type ContractInfo struct {
 }
 
 type ReviewInfo struct {
-    Identi string `json:"identi"`    
+    Identi string `json:"identi"`
     Title string `json:"title"`
     Content string `json:"content"`
     TargetId string `json:"targetid"`
@@ -84,14 +84,14 @@ func (t *SimpleChaincode) MakeReview(stub shim.ChaincodeStubInterface, args []st
     targetid := args[3]
     writid := args[4]
     day := args[5]
-    
+
     reviewInfo := &ReviewInfo{identi, title, content, targetid, writid, day}
     reviewInfoBytes, err := json.Marshal(reviewInfo)
     if err != nil {
         return shim.Error(err.Error())
     }
 
-    //블록체인 네트워크에 데이터 기록 
+    //블록체인 네트워크에 데이터 기록
     var keyName string="review" + identi
     err = stub.PutState(keyName,reviewInfoBytes)
     if err != nil {
@@ -115,14 +115,14 @@ func (t *SimpleChaincode) makeContract(stub shim.ChaincodeStubInterface, args []
         return shim.Error(err.Error())
     }
     state := args[9]
-    
+
     contractInfo := &ContractInfo{title, content, clientId, freelanceId, clientSign, freelanceSign,startDay, endDate, cash, state}
     contractInfoBytes, err := json.Marshal(contractInfo)
     if err != nil {
         return shim.Error(err.Error())
     }
 
-    //블록체인 네트워크에 데이터 기록 
+    //블록체인 네트워크에 데이터 기록
     var keyName string= clientId  + freelanceId+startDay
     err = stub.PutState(keyName,contractInfoBytes)
     if err != nil {
@@ -132,72 +132,72 @@ func (t *SimpleChaincode) makeContract(stub shim.ChaincodeStubInterface, args []
     return shim.Success(nil)
 }
 func (t *SimpleChaincode) editContract(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-    //키값을 받아 
+    //키값을 받아
     key := args[0]
     tableName := args[1]
     editText := args[2]
-    
-    //키값을 조회해서 객체를 찾아본다 
+
+    //키값을 조회해서 객체를 찾아본다
     keyBytes, err := stub.GetState(key)
     if err != nil{
         return shim.Error("Failed to get fromId:"+err.Error())
     }else if keyBytes == nil{
         return shim.Error("Data does not exist")
     }
-    
+
     //json 객체에 데이터를 넣어준다
     contractInfo := ContractInfo{}
     err=json.Unmarshal(keyBytes,&contractInfo)
     if err != nil{
         return shim.Error(err.Error())
     }
-    
+
     //데이터를 수정한다
     if tableName == "title" {
         contractInfo.Title = editText
-        
+
     }else if tableName == "content" {
         contractInfo.Content = editText
-        
+
     }else if tableName == "clientid" {
         contractInfo.ClientId = editText
-        
+
     }else if tableName == "freelanceid" {
         contractInfo.FreelanceId = editText
-        
+
     }else if tableName == "clientsign" {
         contractInfo.ClientSign = editText
-        
+
     }else if tableName == "freelancesign" {
         contractInfo.FreelanceSign = editText
-        
+
     }else if tableName == "startday" {
         contractInfo.StartDay = editText
-        
+
     }else if tableName == "endday" {
         contractInfo.EndDay = editText
-        
+
     }else if tableName == "cash" {
         X, err := strconv.Atoi(editText)
         if err != nil {
             return shim.Error("Invalid transaction amount, expecting a integer value")
         }
         contractInfo.Cash = X
-        
+
     }else if tableName == "state" {
         contractInfo.State = editText
-        
+
     }else {
         return shim.Error("바꾸려는 테이블명이 올바르지 않습니다")
     }
 
-    //수정한 데이터를 저장한다 
+    //수정한 데이터를 저장한다
     contractBytes, _ := json.Marshal(contractInfo)
     err = stub.PutState(key, contractBytes)
-    if err != nil { 
+    if err != nil {
         return shim.Error(err.Error())
     }
-    
+
     return shim.Success(nil)
 
 }
@@ -211,8 +211,8 @@ func (t *SimpleChaincode) makeIdAndCash(stub shim.ChaincodeStubInterface, args [
     if err != nil {
         return shim.Error(err.Error())
     }
-    
-    //블록체인 네트워크에 데이터 기록 
+
+    //블록체인 네트워크에 데이터 기록
     err = stub.PutState(id,valInfoBytes)
     if err != nil {
         return shim.Error(err.Error())
@@ -223,40 +223,40 @@ func (t *SimpleChaincode) makeIdAndCash(stub shim.ChaincodeStubInterface, args [
 
 func (t *SimpleChaincode) moveCash(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     fmt.Println("call moveCash Chaincode")
-    
+
     from := args[0]
     to := args[1]
     X, err := strconv.Atoi(args[2])
     if err != nil {
         return shim.Error("Invalid transaction amount, expecting a integer value")
     }
-    
+
     FromBytes, err := stub.GetState(from)
     if err != nil{
         return shim.Error("Failed to get fromId:"+err.Error())
     }else if FromBytes == nil{
         return shim.Error("Data does not exist")
     }
-    
+
     toBytes, err := stub.GetState(to)
     if err != nil{
         return shim.Error("Failed to get fromId:"+err.Error())
     }else if FromBytes == nil{
         return shim.Error("Data does not exist")
     }
-    
+
     fromCash := WalletInfo{}
     err=json.Unmarshal(FromBytes,&fromCash)
     if err != nil{
         return shim.Error(err.Error())
     }
-    
+
     toCash := WalletInfo{}
     err = json.Unmarshal(toBytes,&toCash)
     if err != nil{
         return shim.Error(err.Error())
     }
-    
+
     if fromCash.Cash >= X {
         fromCash.Cash = fromCash.Cash - X
         toCash.Cash = toCash.Cash + X
@@ -264,92 +264,92 @@ func (t *SimpleChaincode) moveCash(stub shim.ChaincodeStubInterface, args []stri
         return shim.Error("be short of money")
     }
 
-    
+
     fromCashBytes, _ := json.Marshal(fromCash)
     err = stub.PutState(from, fromCashBytes)
-    if err != nil { 
+    if err != nil {
         return shim.Error(err.Error())
     }
-    
+
     toCashBytes, _ := json.Marshal(toCash)
     err = stub.PutState(to, toCashBytes)
-    if err != nil { 
+    if err != nil {
         return shim.Error(err.Error())
     }
-    
+
     return shim.Success(nil)
 }
 
 //입금
 func (t *SimpleChaincode) Deposit(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     fmt.Println("call Deposit Chaincode")
-    
+
     id := args[0]
     X, err := strconv.Atoi(args[1])
     if err != nil {
         return shim.Error("Invalid transaction amount, expecting a integer value")
     }
-    
+
     idBytes, err := stub.GetState(id)
     if err != nil{
         return shim.Error("Failed to get fromId:"+err.Error())
     }else if idBytes == nil{
         return shim.Error("Data does not exist")
     }
-    
+
     idCash := WalletInfo{}
     err=json.Unmarshal(idBytes,&idCash)
     if err != nil{
         return shim.Error(err.Error())
     }
-    
+
     idCash.Cash = idCash.Cash + X
-    
+
     idCashBytes, _ := json.Marshal(idCash)
     err = stub.PutState(id, idCashBytes)
-    if err != nil { 
+    if err != nil {
         return shim.Error(err.Error())
     }
-    
+
     return shim.Success(nil)
 }
 
 //출금
 func (t *SimpleChaincode) Withdrawal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     fmt.Println("call Withdrawal Chaincode")
-    
+
     id := args[0]
     X, err := strconv.Atoi(args[1])
     if err != nil {
         return shim.Error("Invalid transaction amount, expecting a integer value")
     }
-    
+
     idBytes, err := stub.GetState(id)
     if err != nil{
         return shim.Error("Failed to get fromId:"+err.Error())
     }else if idBytes == nil{
         return shim.Error("Data does not exist")
     }
-    
+
     idCash := WalletInfo{}
     err=json.Unmarshal(idBytes,&idCash)
     if err != nil{
         return shim.Error(err.Error())
     }
-    
+
     if idCash.Cash >= X {
-        idCash.Cash = idCash.Cash - X    
+        idCash.Cash = idCash.Cash - X
     }else {
         return shim.Error("be short of money")
     }
-    
-    
+
+
     idCashBytes, _ := json.Marshal(idCash)
     err = stub.PutState(id, idCashBytes)
-    if err != nil { 
+    if err != nil {
         return shim.Error(err.Error())
     }
-    
+
     return shim.Success(nil)
 }
 
@@ -391,7 +391,7 @@ func (t *SimpleChaincode) queryAll(stub shim.ChaincodeStubInterface, args []stri
     fmt.Println("call query method")
     queryString := "{\"selector\":{}}"
     fmt.Println("queryString"+queryString)
-    
+
     queryResults, err := getQueryResultForQueryString(stub,queryString)
     if err != nil{
         return shim.Error(err.Error())
@@ -403,7 +403,7 @@ func (t *SimpleChaincode) queryById(stub shim.ChaincodeStubInterface, args []str
     id := args[0]
     queryString := fmt.Sprintf("{\"selector\":{\"id\":\"%s\"}}", id)
     fmt.Println("queryString"+queryString)
-    
+
     queryResults, err := getQueryResultForQueryString(stub,queryString)
     if err != nil{
         return shim.Error(err.Error())
@@ -416,7 +416,7 @@ func getQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
     if err != nil{
         return nil, err
     }
-    
+
     //defer=> 특정 문자 혹은 함수를 나중에(defer를 호출하는 함수가 리턴하기 직전에)실행하게 한다. java의 finally 블록처럼 마지막에 Clean-up 작업을 위해 사용된다.  에러가 발생하더라도 Close할 수 있음
     defer resultsIterator.Close()
     buffer, err := constructQueryResponseFromIterator(resultsIterator)
